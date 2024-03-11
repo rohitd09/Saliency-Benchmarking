@@ -143,7 +143,26 @@ class Benchmark:
         # return score, tp, fp
 
         return score
-
+    
+    def KLdiv(self, saliencyMap, fixationMap):
+        saliencyMapImage = Image.fromarray(saliencyMap)
+        fixationMapImage = Image.fromarray(fixationMap)
+        
+        map1 = saliencyMapImage.resize(fixationMapImage.size, Image.Resampling.LANCZOS)
+        
+        map1 = np.array(map1).astype(np.float64) / 255.0
+        map2 = fixationMap.astype(np.float64) / 255.0
+        
+        if np.any(map1):
+            map1 /= np.sum(map1)
+        if np.any(map2):
+            map2 /= np.sum(map2)
+        
+        eps = np.finfo(float).eps
+        score = np.sum(map2 * np.log(eps + map2 / (map1 + eps)))
+        
+        return score
+    
     def create_other_map(self, fixation_maps_list, M=10):
         if M > len(fixation_maps_list):
             raise ValueError(f"M cannot be greater than the number of available fixation maps, {len(fixation_maps_list)} fixation maps available")
@@ -162,12 +181,13 @@ class Benchmark:
             map = np.array(img.convert('L'))
         return map
 
-    def find_scores(self, find_AUC_J=True, find_AUC_B=True, find_AUC_Shuffled=True, M=10, jitter=True):
-        scores_dict = {"AUC_J": None, "AUC_B": None, "AUC_Shufled": None}
+    def find_scores(self, find_AUC_J, find_AUC_B, find_AUC_Shuffled, find_KL_Div, M=10, jitter=True):
+        scores_dict = {"AUC_J": None, "AUC_B": None, "AUC_Shufled": None, "KLDiv": None}
 
         AUC_J_list = []
         AUC_B_list = []
         AUC_Shuffled_list = []
+        KLdiv_list = []
 
         videos = os.listdir(self.maps_dir)
         videos.sort()
@@ -210,10 +230,22 @@ class Benchmark:
                     AUC_Shuffled.append(self.AUC_shuffled(saliencyMap=saliencyMap, fixationMap=fixationMap, otherMap=otherMap))
                 auc_scores = np.mean(AUC_Shuffled)
                 AUC_Shuffled_list.append(auc_scores)
-                print(f"AUC_Shuffled for {video}: {auc_scores}\n")
+                print(f"AUC_Shuffled for {video}: {auc_scores}")
+            
+            if find_KL_Div:
+                KLDiv = []
+                print(f"Calculating KL DIv for {video}")
+                for fixation_map_path, saliency_map_path in zip(fixation_maps_list, saliency_maps_list):
+                    fixationMap = self.extract_image(fixation_map_path)
+                    saliencyMap = self.extract_image(saliency_map_path)
+                    KLDiv.append(self.KLdiv(fixationMap=fixationMap, saliencyMap=saliencyMap))
+                kldiv_score = np.mean(KLDiv)
+                KLdiv_list.append(kldiv_score)
+                print(f"KL Div for {video}: {kldiv_score}\n")
 
         scores_dict["AUC_J"] = np.mean(AUC_J_list)
         scores_dict["AUC_B"] = np.mean(AUC_B_list)
         scores_dict["AUC_Shufled"] = np.mean(AUC_Shuffled_list)
+        scores_dict["KLDiv"] = np.mean(KLdiv_list)
 
         return scores_dict
