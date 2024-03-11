@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import copy
 from PIL import Image
 from scipy.ndimage import zoom
 from sklearn.metrics import auc
@@ -14,10 +15,12 @@ class Benchmark:
         if num_of_videos == 0:
             raise ValueError("maps_dir cannot be empty")
 
-    def AUC_Judd(self, saliencyMap, fixationMap, jitter=False):
+    def AUC_Judd(self, saliencyMap, fixationMap, jitter=True, retry=False):
         if not np.any(fixationMap):
             print('no fixationMap')
             return np.nan, None, None, None
+        
+        temp_saliencyMap = copy.deepcopy(saliencyMap)
 
         if saliencyMap.shape != fixationMap.shape:
             saliencyMap = zoom(saliencyMap, [fixationMap.shape[0]/saliencyMap.shape[0], fixationMap.shape[1]/saliencyMap.shape[1]], order=0)
@@ -49,8 +52,16 @@ class Benchmark:
             tp[i] = i / Nfixations
             fp[i] = (aboveth - i) / (Npixels - Nfixations)
 
-        score = auc(fp, tp)
-        allthreshes = np.insert(allthreshes, [0, len(allthreshes)], [1, 0])
+        try:
+            score = auc(fp, tp)
+        except ValueError:
+            if jitter:
+                score = self.AUC_Judd(saliencyMap=temp_saliencyMap, fixationMap=fixationMap, jitter=jitter)
+            else:
+                score = 0
+
+        if not retry:
+            allthreshes = np.insert(allthreshes, [0, len(allthreshes)], [1, 0])
 
         # return score, tp, fp, allthreshes
 
