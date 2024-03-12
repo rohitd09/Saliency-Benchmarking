@@ -16,6 +16,17 @@ II. Distribution Based Metric
 
 1. KL Dievergence
 
+## Results on DHF1K
+
+Here are the following results when comparing the fixations and maps of DHF1K dataset. The dataset can be downloaded from this [link](https://github.com/wenguanwang/DHF1K).
+
+| Metric | Score |
+|----------|----------|
+| AUC Judd | 0.9927 |
+| AUC Borji | 0.9859 |
+| AUC Shuffled | 0.9129 |
+| KL Divergence | 3.6754 |
+
 ## Preparation Before Benchmarking
 
 Please ensure that all saliency maps and fixation maps are organized as follows:
