@@ -4,6 +4,7 @@ import os
 import copy
 from PIL import Image
 from scipy.ndimage import zoom
+from scipy.stats import pearsonr
 from sklearn.metrics import auc
 
 class Benchmark:
@@ -173,6 +174,18 @@ class Benchmark:
         score = np.sum(map2 * np.log(eps + map2 / (map1 + eps)))
         
         return score
+
+    def CC(self, saliencyMap, fixationMap):
+        map1 = zoom(saliencyMap.astype(np.float64), [fixationMap.shape[0]/saliencyMap.shape[0], fixationMap.shape[1]/saliencyMap.shape[1]], order=1)
+    
+        map2 = fixationMap.astype(np.float64)
+        
+        map1 = (map1 - np.mean(map1)) / np.std(map1)
+        map2 = (map2 - np.mean(map2)) / np.std(map2)
+        
+        score, _ = pearsonr(map1.flatten(), map2.flatten())
+        
+        return score
     
     def create_other_map(self, fixation_maps_list, M=10):
         if M > len(fixation_maps_list):
@@ -192,20 +205,21 @@ class Benchmark:
             map = np.array(img.convert('L'))
         return map
 
-    def find_scores(self, find_AUC_J, find_AUC_B, find_AUC_Shuffled, find_KL_Div, M=10, jitter=True):
-        scores_dict = {"AUC_J": None, "AUC_B": None, "AUC_Shufled": None, "KLDiv": None}
+    def find_scores(self, find_AUC_J, find_AUC_B, find_AUC_Shuffled, find_KL_Div, find_CC, M=10, jitter=True):
+        scores_dict = {"AUC_J": None, "AUC_B": None, "AUC_Shufled": None, "KLDiv": None, "CC": None}
 
         AUC_J_list = []
         AUC_B_list = []
         AUC_Shuffled_list = []
         KLdiv_list = []
+        CC_list = []
 
         videos = os.listdir(self.maps_dir)
         videos.sort()
         for video in videos:
             print(f"-------------------------Processing {video}---------------------------")
-            fixation_dir = os.path.join(self.maps_dir, video, "fixations")
-            saliency_dir = os.path.join(self.maps_dir, video, "saliency")
+            fixation_dir = os.path.join(self.maps_dir, video, "fixation")
+            saliency_dir = os.path.join(self.maps_dir, video, "maps")
             fixation_maps_list = [os.path.join(fixation_dir, f) for f in os.listdir(fixation_dir) if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg")]
             saliency_maps_list = [os.path.join(saliency_dir, f) for f in os.listdir(saliency_dir) if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg")]
 
@@ -252,11 +266,25 @@ class Benchmark:
                     KLDiv.append(self.KLdiv(fixationMap=fixationMap, saliencyMap=saliencyMap))
                 kldiv_score = np.mean(KLDiv)
                 KLdiv_list.append(kldiv_score)
-                print(f"KL Div for {video}: {kldiv_score}\n")
+                print(f"KL Divergence for {video}: {kldiv_score}")
+
+            if find_CC:
+                CC = []
+                print(f"Calculation Linear Correlation Coefficient for {video}")
+                for fixation_map_path, saliency_map_path in zip(fixation_maps_list, saliency_maps_list):
+                    fixationMap = self.extract_image(fixation_map_path)
+                    saliencyMap = self.extract_image(saliency_map_path)
+                    CC.append(self.CC(saliencyMap=saliencyMap, fixationMap=fixationMap))
+                cc_score = np.mean(CC)
+                CC_list.append(cc_score)
+                print(f"Linear Correlation Coefficient for {cc_score}")
+            
+            print("\n")
 
         scores_dict["AUC_J"] = np.mean(AUC_J_list)
         scores_dict["AUC_B"] = np.mean(AUC_B_list)
         scores_dict["AUC_Shufled"] = np.mean(AUC_Shuffled_list)
         scores_dict["KLDiv"] = np.mean(KLdiv_list)
+        scores_dict["CC"] = np.mean(CC_list)
 
         return scores_dict

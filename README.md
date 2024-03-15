@@ -27,12 +27,14 @@ Here are the following results when comparing the fixations and maps of DHF1K da
 | AUC Shuffled | 0.9129 |
 | KL Divergence | 3.6754 |
 
+Results for Linear Correlation Coefficient will be updated soon.
+
 ## Preparation Before Benchmarking
 
 Please ensure that all saliency maps and fixation maps are organized as follows:
 
 ```
-└── path to maps_dir
+└── path/to/maps_dir
     ├── fixations     &    saliency 
            ├── images         ├── images
 ```
