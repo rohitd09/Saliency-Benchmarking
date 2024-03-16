@@ -15,6 +15,7 @@ I. Location Based Metric
 II. Distribution Based Metric
 
 1. KL Dievergence
+2. Linear Correlation Coefficient (CC)
 
 ## Results on DHF1K
 
