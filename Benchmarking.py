@@ -218,8 +218,8 @@ class Benchmark:
         videos.sort()
         for video in videos:
             print(f"-------------------------Processing {video}---------------------------")
-            fixation_dir = os.path.join(self.maps_dir, video, "fixation")
-            saliency_dir = os.path.join(self.maps_dir, video, "maps")
+            fixation_dir = os.path.join(self.maps_dir, video, "fixations")
+            saliency_dir = os.path.join(self.maps_dir, video, "saliency")
             fixation_maps_list = [os.path.join(fixation_dir, f) for f in os.listdir(fixation_dir) if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg")]
             saliency_maps_list = [os.path.join(saliency_dir, f) for f in os.listdir(saliency_dir) if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg")]
 
@@ -270,7 +270,7 @@ class Benchmark:
 
             if find_CC:
                 CC = []
-                print(f"Calculation Linear Correlation Coefficient for {video}")
+                print(f"Calculating Linear Correlation Coefficient for {video}")
                 for fixation_map_path, saliency_map_path in zip(fixation_maps_list, saliency_maps_list):
                     fixationMap = self.extract_image(fixation_map_path)
                     saliencyMap = self.extract_image(saliency_map_path)
@@ -281,10 +281,19 @@ class Benchmark:
             
             print("\n")
 
-        scores_dict["AUC_J"] = np.mean(AUC_J_list)
-        scores_dict["AUC_B"] = np.mean(AUC_B_list)
-        scores_dict["AUC_Shufled"] = np.mean(AUC_Shuffled_list)
-        scores_dict["KLDiv"] = np.mean(KLdiv_list)
-        scores_dict["CC"] = np.mean(CC_list)
+        if find_AUC_J:
+            scores_dict["AUC_J"] = np.mean(AUC_J_list)
+        
+        if find_AUC_B:
+            scores_dict["AUC_B"] = np.mean(AUC_B_list)
+
+        if find_AUC_Shuffled:
+            scores_dict["AUC_Shufled"] = np.mean(AUC_Shuffled_list)
+        
+        if find_KL_Div:
+            scores_dict["KLDiv"] = np.mean(KLdiv_list)
+
+        if find_CC:
+            scores_dict["CC"] = np.mean(CC_list)
 
         return scores_dict

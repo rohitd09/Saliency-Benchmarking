@@ -26,8 +26,7 @@ Here are the following results when comparing the fixations and maps of DHF1K da
 | AUC Borji | 0.9859 |
 | AUC Shuffled | 0.9129 |
 | KL Divergence | 3.6754 |
-
-Results for Linear Correlation Coefficient will be updated soon.
+| Linear Correlation Coefficient | 0.211 |
 
 ## Preparation Before Benchmarking
 
@@ -44,7 +43,7 @@ Accepted file formats include `.png`, `.jpg`, and `.jpeg`.
 
 ## Benchmarking Command
 
-To start the benchmarking process, use the command below:
+To start the benchmarking process, clone this repository and use the command below:
 
 ```bash
 python3 run.py --maps_dir /path/to/maps/dir/
@@ -57,6 +56,7 @@ The 3 AUC metric scores is calculated by default and can be disabled if required
 --find_AUCB (Default = True)
 --find_shuffled_AUC (Default = True)
 --find_KLdiv (Default = False)
+--find_CC (Default = False)
 --M_value (Default = 10)
 --add_jitter (Default = True)
 ```
